@@ -29,7 +29,9 @@ function Router() {
         path={LOGIN_PATH}
         element={
           <PublicRoute>
-            <Login />
+            <div className="flex justify-center items-center h-full">
+              <Login />
+            </div>
           </PublicRoute>
         }
       />

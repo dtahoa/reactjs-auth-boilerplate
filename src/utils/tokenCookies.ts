@@ -14,10 +14,11 @@ export function createSessionCookies(params: CreateSessionCookiesParams) {
   const { token, refreshToken } = params
 
   if (token) {
-    setCookie(null, TOKEN_COOKIE, token, {
-      maxAge: COOKIE_EXPIRATION_TIME,
-      path: '/'
-    })
+    // setCookie(null, TOKEN_COOKIE, token, {
+    //   maxAge: COOKIE_EXPIRATION_TIME,
+    //   path: '/'
+    // })
+    localStorage.setItem("token", token);
   }
 
   if (refreshToken) {
@@ -29,13 +30,16 @@ export function createSessionCookies(params: CreateSessionCookiesParams) {
 }
 
 export function removeSessionCookies() {
-  destroyCookie(null, TOKEN_COOKIE)
-  destroyCookie(null, REFRESH_TOKEN_COOKIE)
+  // destroyCookie(null, TOKEN_COOKIE)
+  // destroyCookie(null, REFRESH_TOKEN_COOKIE)
+  localStorage.deleteItem("token");
 }
 
 export function getToken() {
-  const cookies = parseCookies()
-  return cookies[TOKEN_COOKIE]
+  // const cookies = parseCookies()
+  // return cookies[TOKEN_COOKIE]
+
+  return localStorage.getItem("token");
 }
 
 export function getRefreshToken() {

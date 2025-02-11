@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from 'react'
+import { ReactNode, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AxiosError } from 'axios'
 import { AuthContext, SignInCredentials, User } from '@/contexts'
@@ -80,15 +80,14 @@ function AuthProvider(props: Props) {
     }
   }, [])
 
+  const authValue = useMemo(
+    () => ({ user, isAuthenticated, loadingUserData, signIn, signOut }),
+    [user, isAuthenticated, loadingUserData]
+  );
+  
   return (
     <AuthContext.Provider
-      value={{
-        isAuthenticated,
-        user,
-        loadingUserData,
-        signIn,
-        signOut
-      }}
+      value={authValue}
     >
       {children}
     </AuthContext.Provider>

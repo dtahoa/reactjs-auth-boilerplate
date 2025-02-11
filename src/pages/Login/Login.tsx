@@ -1,102 +1,93 @@
-import React, { FormEvent, useEffect, useState } from 'react'
-import { useSession } from '@/hooks'
-
-function initialFormValues() {
-  return {
-    email: '',
-    password: ''
-  }
-}
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema } from "@/schemas";
+import { CardWrapper } from "@/components/auth/card-wrapper";
+import { Form } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { FormInput } from "@/components/auth/form-input";
+import { toast } from "sonner";
+import { Link, useNavigate } from "react-router-dom";
+import { useTransition } from "react";
 
 function Login() {
-  const [values, setValues] = useState(initialFormValues)
-  const [loginRequestStatus, setLoginRequestStatus] = useState('success')
-  const { signIn } = useSession()
+  const navigate = useNavigate();
+  const [isPending, startTransition] = useTransition();
+  
+  const form = useForm({
+    resolver: zodResolver(loginSchema),
+    mode: "onChange",
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
-  const users = [
-    { name: 'Admin', email: 'admin@site.com', password: 'password@123' },
-    { name: 'Client', email: 'client@site.com', password: 'password@123' }
-  ]
+  const handleSubmit = form.handleSubmit(async (values) => {
+    const t: any = async () => {
+      try {
+        const response = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(values),
+        });
 
-  function handleUserChange(event: React.ChangeEvent<HTMLSelectElement>) {
-    const user = event.target.value
-    setValues(JSON.parse(user))
-  }
-
-  function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const { name, value } = event.target
-
-    setValues({
-      ...values,
-      [name]: value
-    })
-  }
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
-
-    setLoginRequestStatus('loading')
-
-    try {
-      await signIn(values)
-    } catch (error) {
-      /**
-       * an error handler can be added here
-       */
-    } finally {
-      setLoginRequestStatus('success')
+        const data = await response.json();
+        if (!data.success) {
+          return toast.error(data.error.message);
+        }
+        navigate("/two-factor");
+      } catch (error) {
+        toast.error("Something went wrong.");
+      }
     }
-  }
-
-  useEffect(() => {
-    // clean the function to prevent memory leak
-    return () => setLoginRequestStatus('success')
-  }, [])
+    startTransition(t);
+  });
 
   return (
-    <div>
-      <form noValidate onSubmit={handleSubmit}>
-        <select name="select-user" onChange={handleUserChange}>
-          <option value="" style={{ display: 'none' }}>
-            Select an user to test
-          </option>
-          {users.map((user) => (
-            <option key={user.email} value={JSON.stringify(user)}>
-              {user.name}
-            </option>
-          ))}
-        </select>
+    <CardWrapper
+      headerTitle="Login"
+      headerDescription="Welcome back! Please fill out the form below before logging in."
+      backButtonLabel="Don't have an account? Register"
+      backButtonHref="/register"
+      showSocial
+    >
+      <Form {...form}>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
+            <FormInput
+              control={form.control}
+              name="email"
+              label="Email Address"
+              type="email"
+              placeholder="e.g. johndoe@example.com"
+              isPending={isPending}
+            />
+            <div>
+              <FormInput
+                control={form.control}
+                name="password"
+                label="Password"
+                type="password"
+                placeholder="******"
+                isPending={isPending}
+              />
+              <Button
+                size="sm"
+                variant="link"
+                className="-mt-6 p-0 text-xs text-blue-500 w-full justify-end"
+                asChild
+              >
+                <Link to="/reset">Forgot password?</Link>
+              </Button>
+            </div>
+          </div>
+          <Button type="submit" disabled={isPending} className="w-full">
+            Login
+          </Button>
+        </form>
+      </Form>
+    </CardWrapper>
+  );
+};
 
-        <div>
-          <label htmlFor="email">Email</label>
-          <input
-            value={values.email}
-            type="email"
-            name="email"
-            id="email"
-            disabled={loginRequestStatus === 'loading'}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="password">Password</label>
-          <input
-            value={values.password}
-            type="password"
-            name="password"
-            id="password"
-            disabled={loginRequestStatus === 'loading'}
-            onChange={handleChange}
-          />
-        </div>
-
-        <button type="submit" disabled={loginRequestStatus === 'loading'}>
-          {loginRequestStatus === 'loading' ? 'Loading...' : 'Submit'}
-        </button>
-      </form>
-    </div>
-  )
-}
-
-export default Login
+export default Login;
